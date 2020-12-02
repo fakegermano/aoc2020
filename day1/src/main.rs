@@ -41,21 +41,29 @@ use std::io::prelude::*;
 fn main() {
     let stdin = io::stdin();
     let mut input = Vec::new();
+    // read input from stdio, line by line, parsing to a int32 number
     for line in stdin.lock().lines() {
         input.push(line.unwrap_or_default().parse::<i32>().unwrap_or_default());
     }
+    // a sorted input decreases the complexity of our algorithm
     input.sort_unstable();
     println!("{:?}", input);
 
     let (a, b) = check_sum_2(&input, 2020);
-    println!("numbers that sum 2020: {} {}", a,  b);
+    println!("2 numbers that sum 2020: {} {}", a,  b);
     println!("multiplied are: {}", a*b);
     let (a, b, c) = check_sum_3(&input, 2020);
-    println!("numbers that sum 2020: {} {} {}", a,  b, c);
+    println!("3 numbers that sum 2020: {} {} {}", a,  b, c);
     println!("multiplied are: {}", a*b*c);
 }
 
 fn check_sum_3(slice: &[i32], target: i32) -> (i32, i32, i32) {
+    // same logic as check_sum_2
+    // but we go through every element of the input first, remove its value from the target
+    // sum and then try to find 2 elements that sum to this new target. if we can't find any
+    // we go to the next entry on the input.
+    // NOTE: need to avoid repeating pointers (we skip k in the i and j stepping)
+    // NOTE: prob can use pointers here to but I got lazy
     let mut k = 0;
     while k < slice.len() {
         let aux = target - slice[k];
@@ -74,7 +82,7 @@ fn check_sum_3(slice: &[i32], target: i32) -> (i32, i32, i32) {
                 continue;
             }
             let sum = slice[i] + slice[j];
-            println!("{} - {} = {} | {} = {}[{}] + {}[{}]", target, slice[k], aux, sum, slice[i], i, slice[j], j);
+            //println!("{} - {} = {} | {} = {}[{}] + {}[{}]", target, slice[k], aux, sum, slice[i], i, slice[j], j);
             if sum == aux {
                 return (slice[k], slice[i], slice[j]);
             } else if sum > aux {
@@ -91,12 +99,16 @@ fn check_sum_3(slice: &[i32], target: i32) -> (i32, i32, i32) {
 fn check_sum_2(slice: &[i32], target: i32) -> (i32, i32) {
     let mut j = slice.len() - 1;
     let mut i = 0;
+    // goes from head to the tail with pointers of the input trying to sum the parts
+    // if sum is larger than target, we need to get lower sums, so step the tail back
+    // if sum is smaller than target, we need to get larger sums, so step the head forwards
+    // NOTE: we can prob use pointers directly but I got lazy
     loop {
         if i >= slice.len() || j <= 0 {
             return (-1, -1)
         }
         let sum = slice[i] + slice[j];
-        println!("{} = {}[{}] + {}[{}]", sum, slice[i], i, slice[j], j);
+        //println!("{} = {}[{}] + {}[{}]", sum, slice[i], i, slice[j], j);
         if sum == target {
             return (slice[i], slice[j]);
         } else if sum > target {
