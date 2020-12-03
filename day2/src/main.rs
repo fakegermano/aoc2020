@@ -69,11 +69,20 @@ impl PasswordEntry {
         //println!("{} {} {}", self.password, self.character, count);
         return count >= self.min && count <= self.max;
     }
+
+    fn check_new(&self) -> bool {
+        let f = self.password.chars().nth((self.min - 1).into()).unwrap() == self.character;
+        let s = self.password.chars().nth((self.max - 1).into()).unwrap() == self.character; 
+        let res = f ^ s;
+        //println!("{} {} {} {}", self.password, f, s, res);
+        return res
+    }
 }
 
 fn main() {
     let stdin = io::stdin();
     let mut count = 0;
+    let mut count_new = 0;
     for line in stdin.lock().lines() {
         let current_line = line.unwrap();
         match PasswordEntry::from_str(current_line.as_str()) {
@@ -83,6 +92,9 @@ fn main() {
                     //println!("OK");
                     count += 1;
                 }
+                if rgb.check_new() {
+                    count_new += 1;
+                }
             },
             Err(_) => {
                 println!("error parsing line");
@@ -90,4 +102,5 @@ fn main() {
         }
     }
     println!("{}", count);
+    println!("{}", count_new);
 }
