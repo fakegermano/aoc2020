@@ -41,16 +41,37 @@ Here are some other boarding passes:
 
 As a sanity check, look through your list of boarding passes. What is the highest seat ID on a boarding pass?
 
+--- Part Two ---
+
+Ding! The "fasten seat belt" signs have turned on. Time to find your seat.
+
+It's a completely full flight, so your seat should be the only missing boarding pass in your list. However, there's a catch: some of the seats at the very front and back of the plane don't exist on this aircraft, so they'll be missing from your list as well.
+
+Your seat wasn't at the very front or back, though; the seats with IDs +1 and -1 from yours will be in your list.
+
+What is the ID of your seat?
+
 */
 use std::io;
 use std::io::prelude::*;
 
-fn get_seat_id(row: u32, col: u32) -> u32 {
+fn get_seat_id(row: usize, col: usize) -> usize {
     return row *8 + col;
+}
+
+fn find_seat(seats: &[bool], from: usize) -> usize {
+    let mut seat = from;
+    loop {
+        if !seats[seat] && seats[seat+1] && seats[seat-1] {
+            return seat
+        }
+        seat -= 1;
+    }
 }
 fn main() {
     let stdin = io::stdin();
     let mut max = 0;
+    let mut seats = [false; 1032]; // 2^8 * 2^3 + 2^3
     for line in stdin.lock().lines() {
         let sline = line.unwrap();
         println!("{}", sline);
@@ -84,7 +105,9 @@ fn main() {
         if seat_id > max {
             max = seat_id;
         }
+        seats[seat_id] = true;
         println!("{}[{:b}] {}[{:b}] {}", row_b, row_b, col_b, col_b, seat_id);
     }
-    println!("{}", max);
+    println!("{} {}", max, find_seat(&seats, max));
 }
+
