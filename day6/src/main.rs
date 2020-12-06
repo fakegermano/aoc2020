@@ -43,54 +43,83 @@ In this example, the sum of these counts is 3 + 3 + 3 + 1 + 1 = 11.
 
 For each group, count the number of questions to which anyone answered "yes". What is the sum of those counts?
 
+--- Part Two ---
+
+As you finish the last group's customs declaration, you notice that you misread one word in the instructions:
+
+You don't need to identify the questions to which anyone answered "yes"; you need to identify the questions to which everyone answered "yes"!
+
+Using the same example as above:
+
+abc
+
+a
+b
+c
+
+ab
+ac
+
+a
+a
+a
+a
+
+b
+
+This list represents answers from five groups:
+
+    In the first group, everyone (all 1 person) answered "yes" to 3 questions: a, b, and c.
+    In the second group, there is no question to which everyone answered "yes".
+    In the third group, everyone answered yes to only 1 question, a. Since some people did not answer "yes" to b or c, they don't count.
+    In the fourth group, everyone answered yes to only 1 question, a.
+    In the fifth group, everyone (all 1 person) answered "yes" to 1 question, b.
+
+In this example, the sum of these counts is 3 + 0 + 1 + 1 + 1 = 6.
+
+For each group, count the number of questions to which everyone answered "yes". What is the sum of those counts?
+
 */
 
 use std::io;
 use std::io::prelude::*;
 
-fn sum(qs: &[bool]) -> u32 {
+fn sum(qs: &[u16], n: u16) -> u32 {
     let mut t = 0;
     for q in qs {
-        if *q {
+        if *q == n {
             t += 1;
         }
     }
     return t;
 }
 
-fn check_question(qs: &mut [bool], s: &str) {
+fn check_question(qs: &mut [u16], s: &str) {
     for  c in s.chars() {
         let i = c.to_digit(36).unwrap() as usize - 10;
-        qs[i] = true;
+        qs[i] += 1;
     }
 }
 
 fn main() {
     let stdin = io::stdin();
-    let mut questions = [false; 26];
+    let mut questions: [u16; 26] = [0; 26];
+    let mut members = 0;
     let mut total = 0;
     for line in stdin.lock().lines() {
         let sline = line.unwrap();
         if sline == "" {
-            let sum = sum(&questions);
-            /*
-            print!("[");
-            for q in questions.iter() {
-                if *q {
-                    print!(" 1");
-                } else {
-                    print!(" 0");
-                }
-            }
-            println!("] {}", sum);
-            */
+            let sum = sum(&questions, members);
+            //println!("{:?} {} {}", questions, members, sum);
+            members = 0;
             total += sum;
-            questions = [false; 26];
+            questions = [0; 26];
         } else {
             //println!("{}", sline);
+            members += 1;
             check_question(&mut questions, sline.as_str());
         }
     }
-    total += sum(&questions);
+    total += sum(&questions, members);
     println!("{}", total);
 }
