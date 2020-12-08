@@ -31,6 +31,36 @@ In the above rules, the following options would be available to you:
 So, in this example, the number of bag colors that can eventually contain at least one shiny gold bag is 4.
 
 How many bag colors can eventually contain at least one shiny gold bag? (The list of rules is quite long; make sure you get all of it.)
+
+--- Part Two ---
+
+It's getting pretty expensive to fly these days - not because of ticket prices, but because of the ridiculous number of bags you need to buy!
+
+Consider again your shiny gold bag and the rules from the above example:
+
+    faded blue bags contain 0 other bags.
+    dotted black bags contain 0 other bags.
+    vibrant plum bags contain 11 other bags: 5 faded blue bags and 6 dotted black bags.
+    dark olive bags contain 7 other bags: 3 faded blue bags and 4 dotted black bags.
+
+So, a single shiny gold bag must contain 1 dark olive bag (and the 7 bags within it) plus 2 vibrant plum bags (and the 11 bags within each of those): 1 + 1*7 + 2 + 2*11 = 32 bags!
+
+Of course, the actual rules have a small chance of going several levels deeper than this example; be sure to count all of the bags, even if the nesting becomes topologically impractical!
+
+Here's another example:
+
+shiny gold bags contain 2 dark red bags.
+dark red bags contain 2 dark orange bags.
+dark orange bags contain 2 dark yellow bags.
+dark yellow bags contain 2 dark green bags.
+dark green bags contain 2 dark blue bags.
+dark blue bags contain 2 dark violet bags.
+dark violet bags contain no other bags.
+
+In this example, a single shiny gold bag must contain 126 other bags.
+
+How many individual bags are required inside your single shiny gold bag?
+
 */
 use std::io;
 use std::io::prelude::*;
@@ -41,7 +71,7 @@ use std::collections::{HashMap, HashSet, LinkedList};
 struct Graph {
     nodes_map: Vec<String>,
     nodes: HashMap<String, usize>,
-    edges: HashMap<String, LinkedList<usize>>
+    edges: HashMap<String, LinkedList<(usize, i32)>>
 }
 
 impl Graph {
@@ -58,18 +88,34 @@ impl Graph {
                 reachable.insert(node);
             }
             let color = &self.nodes_map[node];
-            for i in self.edges.get(color).unwrap().iter() {
+            for (i, _) in self.edges.get(color).unwrap().iter() {
                 stack.push_front(*i);
             }
         }
         return reachable;
+    }
+
+    fn dfs_sum(&self, source: usize) -> i64 {
+        let mut sum = 1i64;
+
+        let color = &self.nodes_map[source];
+        let edge_list = self.edges.get(color).unwrap();
+        //println!("( {} | {:?}", source, edge_list);
+        for (i, q) in edge_list.iter() {
+            let val =  self.dfs_sum(*i);
+            let sum_l = i64::from(*q) * val;
+            //println!(" {}x{} = {}", q, val, sum_l);
+            sum += sum_l;
+        }
+        //println!(" => {} )", sum);
+        return sum;
     }
 }
 
 fn main() {
     let stdin = io::stdin();
     let rc_re = Regex::new(
-        r"((?P<color>\w+ \w+) bag[s]*)+"
+        r"((?P<quantity>\d+ )?(?P<color>\w+ \w+) bag[s]*)+"
     ).unwrap();
     let mut graph = Graph {
         nodes: HashMap::new(),
@@ -99,8 +145,9 @@ fn main() {
                 } else {
                     let root_str = &graph.nodes_map[root];
                     let color_i = *graph.nodes.get(&color).unwrap();
+                    let quantity = cap["quantity"].trim().parse::<i32>().unwrap_or(-1);
                     //println!("\t\t[{} {}]->[{} {}]", root_str, root, color, color_i);
-                    graph.edges.get_mut(root_str).unwrap().push_back(color_i);
+                    graph.edges.get_mut(root_str).unwrap().push_back((color_i, quantity));
                 }
             }
         }
@@ -123,4 +170,5 @@ fn main() {
     //println!("{:?}", can_reach);
     println!("{}", can_reach.len());
 
+    println!("{}", graph.dfs_sum(target) - 1);
 }
