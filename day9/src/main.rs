@@ -49,6 +49,39 @@ In this example, after the 5-number preamble, almost every number is the sum of 
 
 The first step of attacking the weakness in the XMAS data is to find the first number in the list (after the preamble) which is not the sum of two of the 25 numbers before it. What is the first number that does not have this property?
 
+--- Part Two ---
+
+The final step in breaking the XMAS encryption relies on the invalid number you just found: you must find a contiguous set of at least two numbers in your list which sum to the invalid number from step 1.
+
+Again consider the above example:
+
+35
+20
+15
+25
+47
+40
+62
+55
+65
+95
+102
+117
+150
+182
+127
+219
+299
+277
+309
+576
+
+In this list, adding up all of the numbers from 15 through 40 produces the invalid number from step 1, 127. (Of course, the contiguous set of numbers in your actual list might be much longer.)
+
+To find the encryption weakness, add together the smallest and largest number in this contiguous range; in this example, these are 15 and 47, producing 62.
+
+What is the encryption weakness in your XMAS-encrypted list of numbers?
+
 */
 use std::io;
 use std::io::prelude::*;
@@ -83,10 +116,52 @@ fn main() {
         numbers.push(number);
     }
     let n = 25;
+    let mut weak = 0u64;
     for i in n..numbers.len() {
         if !valid(numbers[i], &numbers[i-n..i], n) {
-            println!("{}", numbers[i]);
+            weak = numbers[i];
             break;
         }
     }
+
+    println!("{}", weak);
+
+    let mut i=0;
+    let mut j=1;
+    let mut sum = 0u64;
+    sum += numbers[i];
+
+    loop {
+        sum += numbers[j];
+
+        if sum < weak {
+            j += 1;
+        } else if sum > weak {
+            sum -= numbers[j];
+            sum -= numbers[i];
+            i += 1;
+        } else {
+            break;
+        }
+        //println!("{} {} {:?} {} {}", i, j, &numbers[i..j+1], sum, weak);
+    }
+
+    sum = 0;
+    // we check the sum just to be sure
+    // and also find min and max
+    let mut min = numbers[i];
+    let mut max = numbers[i];
+    for x in &numbers[i..j+1] {
+        sum += *x;
+        if *x > max {
+            max = *x;
+        }
+        if *x < min {
+            min = *x;
+        }
+    }
+    assert_eq!(sum, weak);
+    assert!(j-i+1 >= 2);
+    //println!("{} {} {} {}", i, j, min, max);
+    println!("{}", min + max);
 }
