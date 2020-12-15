@@ -47,13 +47,16 @@ struct Ship {
     dir: i32
 }
 
-impl Ship {
-    fn distance(self) -> i32 {
-        return self.x.abs() + self.y.abs();
-    }
+#[derive(Debug)]
+struct ShipNew {
+    wx: i32,
+    wy: i32,
+    x: i32,
+    y: i32
 }
-fn decode(entry: &str, ship: &mut Ship) {
-    //print!("{} {:?}", entry, ship);
+
+fn decode(entry: &str, ship: &mut Ship, ship_new: &mut ShipNew) {
+    
     let amount = entry[1..].parse::<i32>().unwrap();
     match entry.chars().nth(0).unwrap() {
         'F' => {
@@ -75,28 +78,66 @@ fn decode(entry: &str, ship: &mut Ship) {
                     panic!("WHAT? {}", face);
                 }
             }
+            ship_new.x += amount * ship_new.wx;
+            ship_new.y += amount * ship_new.wy;
         },
         'N' => {
             ship.y += amount;
+            ship_new.wy += amount;
         },
         'S' => {
             ship.y -= amount;
+            ship_new.wy -= amount;
         },
         'E' => {
             ship.x += amount;
+            ship_new.wx += amount;
         },
         'W' => {
             ship.x -= amount;
+            ship_new.wx -= amount;
         },
         'L' => {
             ship.dir += amount;
+            let (x, y) = (ship_new.wx, ship_new.wy);
+            match amount {
+                90 => {
+                    ship_new.wx = -y;
+                    ship_new.wy = x;
+                },
+                180 => {
+                    ship_new.wx = -x;
+                    ship_new.wy = -y;
+                },
+                270 => {
+                    ship_new.wx = y;
+                    ship_new.wy = -x;
+                },
+                _ => panic!("WHAT? {}", amount)
+            }
         },
         'R' => {
             ship.dir -= amount;
+            let (x, y) = (ship_new.wx, ship_new.wy);
+            match amount {
+                90 => {
+                    ship_new.wx = y;
+                    ship_new.wy = -x;
+                },
+                180 => {
+                    ship_new.wx = -x;
+                    ship_new.wy = -y;
+                },
+                270 => {
+                    ship_new.wx = -y;
+                    ship_new.wy = x;
+                },
+                _ => panic!("WHAT? {}", amount)
+            }
         },
         _ => panic!("shouldn't happen")
     }
-    //println!(" -> {:?}", ship);
+    //println!("{}\t{:?}\t{:?}", entry, ship, ship_new);
 }
 fn main() {
     let stdin = io::stdin();
@@ -104,9 +145,14 @@ fn main() {
         x: 0, y: 0, 
         dir: 0
     };
-    //println!("{:?}", s);
+    let mut sn = ShipNew {
+        x: 0, y: 0, 
+        wx: 10, wy: 1,
+    };
+    //println!(" \t{:?}\t{:?}", s, sn);
     for line in stdin.lock().lines() {
-        decode(&line.unwrap(), &mut s);
+        decode(&line.unwrap(), &mut s, &mut sn);
     }
-    println!("{}", s.distance());
+    println!("{}", s.x.abs() + s.y.abs());
+    println!("{}", sn.x.abs() + sn.y.abs());
 }
