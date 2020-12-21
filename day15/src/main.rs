@@ -40,6 +40,20 @@ Here are a few more examples:
 
 Given your starting numbers, what will be the 2020th number spoken?
 
+--- Part Two ---
+
+Impressed, the Elves issue you a challenge: determine the 30000000th number spoken. For example, given the same starting numbers as above:
+
+    Given 0,3,6, the 30000000th number spoken is 175594.
+    Given 1,3,2, the 30000000th number spoken is 2578.
+    Given 2,1,3, the 30000000th number spoken is 3544142.
+    Given 1,2,3, the 30000000th number spoken is 261214.
+    Given 2,3,1, the 30000000th number spoken is 6895259.
+    Given 3,2,1, the 30000000th number spoken is 18.
+    Given 3,1,2, the 30000000th number spoken is 362.
+
+Given your starting numbers, what will be the 30000000th number spoken?
+
 */
 
 use std::io;
@@ -51,7 +65,7 @@ fn main() {
     let mut buffer = String::new();
     let _n = stdin.lock().read_to_string(&mut buffer);
     let input: Vec<i32> = buffer.split(",").map(|x: &str| -> i32 { x.parse::<i32>().unwrap() }).collect();
-    println!("\n{:?}", input);
+    //println!("\n{:?}", input);
 
     let mut turns = HashMap::new();
     let mut _last;
@@ -64,7 +78,7 @@ fn main() {
     }
 
     let mut last = input[input.len()-1];
-    for i in input.len()..2020 {
+    for i in input.len()..30000000 {
         if turns.get(&last).unwrap().len() == 1 {
             last = 0;
             if turns.contains_key(&last) {
