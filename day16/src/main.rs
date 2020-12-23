@@ -41,26 +41,52 @@ It doesn't matter which position corresponds to which field; you can identify in
 
 Consider the validity of the nearby tickets you scanned. What is your ticket scanning error rate?
 
+--- Part Two ---
+
+Now that you've identified which tickets contain invalid values, discard those tickets entirely. Use the remaining valid tickets to determine which field is which.
+
+Using the valid ranges for each field, determine what order the fields appear on the tickets. The order is consistent between all tickets: if seat is the third field, it is the third field on every ticket, including your ticket.
+
+For example, suppose you have the following notes:
+
+class: 0-1 or 4-19
+row: 0-5 or 8-19
+seat: 0-13 or 16-19
+
+your ticket:
+11,12,13
+
+nearby tickets:
+3,9,18
+15,1,5
+5,14,9
+
+Based on the nearby tickets in the above example, the first position must be row, the second position must be class, and the third position must be seat; you can conclude that in your ticket, class is 12, row is 11, and seat is 13.
+
+Once you work out which field is which, look for the six fields on your ticket that start with the word departure. What do you get if you multiply those six values together?
+
 */
 use std::io;
 use std::io::prelude::*;
 use regex::Regex;
+use std::collections::HashMap;
 
 fn main() {
     let stdin = io::stdin();
 
-    let re_rules = Regex::new(r"(.+): (?P<r1>.+) or (?P<r2>.+)").unwrap();
+    let re_rules = Regex::new(r"(?P<name>.+): (?P<r1>.+) or (?P<r2>.+)").unwrap();
     //println!("{:?}", re_rules);
     let re_range = Regex::new(r"(\d+)-(\d+)").unwrap();
     //println!("{:?}", re_range);
 
-    let mut rules = Vec::new();
-
+    let mut rules = HashMap::new();
+    let mut rule_order = Vec::new();
     let mut reading_rules = true;
     let mut reading_own_ticket = false;
     let mut reading_other_tickets = false;
 
     let mut invalid = Vec::new();
+    let mut tickets = Vec::new();
     for line in stdin.lock().lines() {
         let sline = line.unwrap();
         //println!("{:?}", sline);
@@ -83,6 +109,7 @@ fn main() {
             //println!("{:?}", cap);
             let r1 = cap.name("r1").unwrap();
             let r2 = cap.name("r2").unwrap();
+            let name = cap.name("name").unwrap();
             //println!("{:?} {:?}", r1.as_str(), r2.as_str());
             let cap_r1 = re_range.captures(r1.as_str()).unwrap();
             //println!("{:?}", cap_r1);
@@ -94,31 +121,106 @@ fn main() {
             //println!("{:?}", cap_r1);
             let r2_s = cap_r2.get(1).unwrap().as_str().parse::<i32>().unwrap();
             let r2_e = cap_r2.get(2).unwrap().as_str().parse::<i32>().unwrap();
-            rules.push(((r1_s, r1_e), (r2_s, r2_e)));
+            let sname = String::from(name.as_str());
+            rules.insert(sname, ((r1_s, r1_e), (r2_s, r2_e)));
+            rule_order.push(String::from(name.as_str()));
         }
         if reading_own_ticket {
             reading_own_ticket = false;
+            tickets.push(sline.split(",").map(|s| -> i32 { return s.parse::<i32>().unwrap(); }).collect::<Vec<i32>>());
             continue;
         }
         if reading_other_tickets {
-            for number in sline.split(",") {
-                let n = number.parse::<i32>().unwrap();
-                let flag: bool = rules.iter().map(|r| -> bool {
+            let mut numbers_valid = Vec::new();
+            let ticket = sline.split(",").map(|s| -> i32 { return s.parse::<i32>().unwrap(); }).collect::<Vec<i32>>();
+            for n in ticket.iter() {
+                let flag: bool = rules.values().map(|r| -> bool {
                     let (r1, r2) = r;
                     let (r1s, r1e) = r1;
                     let (r2s, r2e) = r2;
-                    return (n >= *r1s && n <= *r1e) || (n >= *r2s && n <= *r2e);
+                    return (*n >= *r1s && *n <= *r1e) || (*n >= *r2s && *n <= *r2e);
                  }).all(|v| -> bool {
                      return !v;
                  });
+                 numbers_valid.push(!flag);
                  //println!("{:?}", flag);
                  if flag {
-                    invalid.push(n);
+                    invalid.push(*n);
                  }
+            }
+            //println!("{:?}\n{:?}", ticket, numbers_valid);
+            if numbers_valid.iter().all(|v| -> bool { return *v; }) {
+                tickets.push(ticket);
             }
         }
     }
     //println!("{:?}", rules);
     //println!("{:?}", invalid);
     println!("{}", invalid.iter().sum::<i32>());
+    //println!("{:?}", tickets);
+    
+    let mut rule_idx = HashMap::new();
+    let mut values = HashMap::new();
+    for i in 0..tickets[0].len() {
+        values.insert(i, Vec::new());
+        rule_idx.insert(i, Vec::new());
+    }
+    for ticket in tickets.iter().skip(1) {
+        for (idx, val) in ticket.iter().enumerate() {
+            values.get_mut(&idx).unwrap().push(*val);
+        }
+    }
+
+    //println!("{:?}", values);
+    for i in 0..tickets[0].len() {
+        let valuev = values.get(&i).unwrap();
+        for rname in rule_order.iter() {   
+            let rule = rules.get(rname).unwrap();
+            //print!("{:?} {:?}", rule, valuev);
+            let flag = valuev.iter().map(|v| -> bool {
+                let (r1, r2) = rule;
+                let (r1s, r1e) = r1;
+                let (r2s, r2e) = r2;
+                return (*v >= *r1s && *v <= *r1e) || (*v >= *r2s && *v <= *r2e);
+            }).all(|v| -> bool { v });
+            if flag {
+                rule_idx.get_mut(&i).unwrap().push(rname);
+                //println!(" taken");
+            }
+            //println!();
+        }
+    }
+    assert_eq!(rule_idx.len(), rules.len());
+    let mut options_order = rule_idx.iter().map(|e| -> (usize, &Vec<&String>) {
+        let (idx, names) = e;
+        return (*idx, names);
+    }).collect::<Vec<(usize, &Vec<&String>)>>();
+    options_order.sort_by_key(|k| k.1.len());
+
+    //println!("{:?}", options_order);
+
+    let mut final_indexes = HashMap::new();
+    for (i, names) in options_order {
+        let mut final_name = String::new();
+        for name in names.iter() {
+            if !final_indexes.contains_key(*name) {
+                final_name = String::from(name.as_str());
+                break;
+            }
+        }
+        final_indexes.insert(final_name, i);
+    }
+    //println!("{:?}", final_indexes);
+    assert_eq!(final_indexes.len(), rules.len());
+    //println!{"{:?}", tickets[0]};
+    
+    let mut product = 1i64;
+    for (name, idx) in final_indexes {
+        //println!("{} {} {}", name, idx, tickets[0][idx]);
+        if name.contains("departure") {
+            product *= tickets[0][idx] as i64;
+        }
+    }
+    println!("{}", product);
+    
 }
