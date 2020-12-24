@@ -36,6 +36,31 @@ Here are a few more examples:
 
 Before you can help with the homework, you need to understand it yourself. Evaluate the expression on each line of the homework; what is the sum of the resulting values?
 
+--- Part Two ---
+
+You manage to answer the child's questions and they finish part 1 of their homework, but get stuck when they reach the next section: advanced math.
+
+Now, addition and multiplication have different precedence levels, but they're not the ones you're familiar with. Instead, addition is evaluated before multiplication.
+
+For example, the steps to evaluate the expression 1 + 2 * 3 + 4 * 5 + 6 are now as follows:
+
+1 + 2 * 3 + 4 * 5 + 6
+  3   * 3 + 4 * 5 + 6
+  3   *   7   * 5 + 6
+  3   *   7   *  11
+     21       *  11
+         231
+
+Here are the other examples from above:
+
+    1 + (2 * 3) + (4 * (5 + 6)) still becomes 51.
+    2 * 3 + (4 * 5) becomes 46.
+    5 + (8 * 3 + 9 + 3 * 4 * 3) becomes 1445.
+    5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4)) becomes 669060.
+    ((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2 becomes 23340.
+
+What do you get if you add up the results of evaluating the homework problems using these new rules?
+
 */
 use std::io;
 use std::io::prelude::*;
@@ -43,6 +68,7 @@ use std::io::prelude::*;
 pub mod ast;
 
 lalrpop_mod!(pub grammar);
+lalrpop_mod!(pub grammar2);
 
 use ast::{Expr, Opcode};
 
@@ -58,6 +84,7 @@ fn calculate(expr: &Expr) -> u128 {
     }
 }
 fn main() {
+    // part 1 grammar check
     let exp1 = grammar::ExprParser::new().parse("1 + 2 * 3 + 4 * 5 + 6").unwrap();
     let v1 = calculate(&exp1);
     //println!("{:?} = {}", exp1, v1);
@@ -88,17 +115,60 @@ fn main() {
     //println!("{:?} = {}", exp1, v1);
     assert_eq!(v1, 13632);
 
-    let mut total = 0u128;
+    // part 2 grammar check
+    let exp1 = grammar2::ExprParser::new().parse("1 + 2 * 3 + 4 * 5 + 6").unwrap();
+    let v1 = calculate(&exp1);
+    //println!("{:?} = {}", exp1, v1);
+    assert_eq!(v1, 231);
+
+    let exp1 = grammar2::ExprParser::new().parse("1 + (2 * 3) + (4 * (5 + 6))").unwrap();
+    let v1 = calculate(&exp1);
+    //println!("{:?} = {}", exp1, v1);
+    assert_eq!(v1, 51);
+
+    let exp1 = grammar2::ExprParser::new().parse("2 * 3 + (4 * 5)").unwrap();
+    let v1 = calculate(&exp1);
+    //println!("{:?} = {}", exp1, v1);
+    assert_eq!(v1, 46);
+
+    let exp1 = grammar2::ExprParser::new().parse("5 + (8 * 3 + 9 + 3 * 4 * 3)").unwrap();
+    let v1 = calculate(&exp1);
+    //println!("{:?} = {}", exp1, v1);
+    assert_eq!(v1, 1445);
+
+    let exp1 = grammar2::ExprParser::new().parse("5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))").unwrap();
+    let v1 = calculate(&exp1);
+    //println!("{:?} = {}", exp1, v1);
+    assert_eq!(v1, 669060);
+
+    let exp1 = grammar2::ExprParser::new().parse("5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))").unwrap();
+    let v1 = calculate(&exp1);
+    //println!("{:?} = {}", exp1, v1);
+    assert_eq!(v1, 669060);
+    
+    let exp1 = grammar2::ExprParser::new().parse("((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2").unwrap();
+    let v1 = calculate(&exp1);
+    //println!("{:?} = {}", exp1, v1);
+    assert_eq!(v1, 23340);
+
+    let mut total1 = 0u128;
+    let mut total2 = 0u128;
 
     let stdin = io::stdin();
 
     for line in stdin.lock().lines() {
-        let exp = grammar::ExprParser::new().parse(line.unwrap().as_str()).unwrap();
-        let v = calculate(&exp);
-        //println!("{:?} = {}", exp, v);
+        let sline = String::from(line.unwrap().as_str());
+        let exp1 = grammar::ExprParser::new().parse(sline.as_str()).unwrap();
+        let v1 = calculate(&exp1);
+        //println!("{:?} = {}", exp1, v1);
+        let exp2 = grammar2::ExprParser::new().parse(sline.as_str()).unwrap();
+        let v2 = calculate(&exp2);
+        //println!("{:?} = {}", exp2, v2);
 
-        total += v;
+        total1 += v1;
+        total2 += v2;
     }
 
-    println!("{}", total);
+    println!("{}", total1);
+    println!("{}", total2);
 }
